@@ -1,11 +1,11 @@
-import { ConflictException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common'
-import { JwtService }                                                       from '@nestjs/jwt'
-import { InjectModel }                                                      from '@nestjs/mongoose'
-import * as bcrypt                                                          from 'bcrypt'
-import { Model }                                                            from 'mongoose'
-import { CreateUserDto }                                                    from './dto/createUser.dto'
-import { UserDto }                                                          from './dto/newUser.dto'
-import { User, UserDocument }                                               from './models/user.model'
+import { ConflictException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common'
+import { JwtService }                                                                      from '@nestjs/jwt'
+import { InjectModel }                                                                     from '@nestjs/mongoose'
+import * as bcrypt                                                                         from 'bcrypt'
+import { Model }                                                                           from 'mongoose'
+import { CreateUserDto }                                                                   from './dto/createUser.dto'
+import { UserDto }                                                                         from './dto/newUser.dto'
+import { User, UserDocument }                                                              from './models/user.model'
 
 @Injectable()
 export class AuthService {
@@ -15,7 +15,7 @@ export class AuthService {
     private jwtService: JwtService
   ){}
 
-  async register(createUser: CreateUserDto): Promise<UserDto>{
+  async register(createUser: CreateUserDto): Promise<{ success: boolean }>{
     const { username, password } = createUser
     const user: User = await this.userModel.findOne({ username })
     if (user) {
@@ -23,24 +23,26 @@ export class AuthService {
     }
     const hashPassword = await bcrypt.hash(password, 5)
     const newUser = new this.userModel({ username, password: hashPassword })
+    newUser.isActivate = false
     await newUser.save()
-    const payload = { username: newUser.username, id: newUser._id }
-    const access_token = this.jwtService.sign(payload)
-    return new UserDto(newUser, access_token)
+    return { success: true }
   }
 
   async login(username: string){
     const user = await this.userModel.findOne({ username })
-    const payload = { username: user.username, isRefresh: false }
+    const payload = { username: user.username }
     const access_token = this.jwtService.sign(payload)
-    return new UserDto(user, access_token)
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: '86400s' })
+    user.refresh_token = refresh_token
+    user.save()
+    const newUser = new UserDto(user)
+    return { newUser, access_token, refresh_token }
   }
 
   async refreshToken(username: string){
     const user = await this.userModel.findOne({ username })
-    const payload = { username: user.username, isRefresh: true }
-    const access_token = this.jwtService.sign(payload, { expiresIn: '86400s' })
-    return new UserDto(user, access_token)
+    const payload = { username: user.username }
+    return this.jwtService.sign(payload)
   }
 
   async validateUser(username: string, password: string): Promise<any>{
@@ -56,6 +58,19 @@ export class AuthService {
       return new UserDto(user)
     }
     return null
+  }
+
+  validateUserByCookie(refresh_token: string){
+    return this.userModel.findOne({ refresh_token })
+  }
+
+  async logout(refresh_token: string){
+    const user = await this.userModel.findOne({ refresh_token })
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NO_CONTENT)
+    }
+    user.refresh_token = null
+    user.save()
   }
 
   async getAllUsers(){

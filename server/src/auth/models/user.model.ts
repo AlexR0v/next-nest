@@ -10,6 +10,12 @@ export class User {
 
   @Prop()
   password: string
+
+  @Prop()
+  refresh_token: string
+
+  @Prop()
+  isActivate: boolean
 }
 
 export const UserModel = SchemaFactory.createForClass(User)

@@ -1,11 +1,12 @@
 import { faCheck, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon }                from '@fortawesome/react-fontawesome'
-import axios                              from 'axios'
 import { useEffect, useRef, useState }    from 'react'
+import { Link }                           from 'react-router-dom'
+import { api }                            from '../api/index.js'
 
 const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/
 const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/
-const REGISTER_URL = 'http://localhost:5002/api/auth/register'
+const REGISTER_URL = '/auth/register'
 
 const Register = () => {
 
@@ -26,6 +27,9 @@ const Register = () => {
 
   const [errMsg, setErrMsg] = useState('')
   const [success, setSuccess] = useState(false)
+
+  const [typePass, setTypePass] = useState('password')
+  const [check, setCheck] = useState(false)
 
   useEffect(() => {
     userRef.current.focus()
@@ -57,15 +61,13 @@ const Register = () => {
       return
     }
     try {
-      const response = await axios.post(REGISTER_URL,
+      const response = await api.post(REGISTER_URL,
         JSON.stringify({ username: user, password: pwd }),
         {
           headers: { 'Content-Type': 'application/json' },
           withCredentials: true
         }
       )
-      console.log(response?.data)
-      console.log(response)
       setSuccess(true)
       setUser('')
       setPwd('')
@@ -89,7 +91,7 @@ const Register = () => {
         <section>
           <h1>Success!</h1>
           <p>
-            <a href='#'>Sign In</a>
+            <Link to='/login'>Sign In</Link>
           </p>
         </section>
         :
@@ -144,7 +146,7 @@ const Register = () => {
               />
             </label>
             <input
-              type='password'
+              type={typePass}
               id='password'
               onChange={(e) => setPwd(e.target.value)}
               value={pwd}
@@ -180,7 +182,7 @@ const Register = () => {
               />
             </label>
             <input
-              type='password'
+              type={typePass}
               id='confirm_pwd'
               onChange={(e) => setMatchPwd(e.target.value)}
               value={matchPwd}
@@ -197,13 +199,24 @@ const Register = () => {
               <FontAwesomeIcon icon={faInfoCircle} />
               Must match the first password input field.
             </p>
-
+            <label htmlFor='checkbox'>Show password:</label>
+            <input
+              type='checkbox'
+              id='checkbox'
+              onChange={(e) => {
+                setCheck(e.target.checked)
+                if (e.target.checked) {
+                  setTypePass('text')
+                } else setTypePass('password')
+              }}
+              checked={check}
+            />
             <button disabled={!validName || !validPwd || !validMatch}>Sign Up</button>
           </form>
           <p>
             Already registered?<br />
             <span className='line'>
-          <a href='#'>Sign In</a>
+          <Link to='/login'>Sign In</Link>
                         </span>
           </p>
         </section>

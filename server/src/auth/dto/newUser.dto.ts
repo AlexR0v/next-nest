@@ -1,11 +1,11 @@
 export class UserDto {
   username: string
   id: string
-  access_token?: string
+  isActivate: boolean
 
-  constructor(model, token = ''){
+  constructor(model){
     this.username = model.username
     this.id = model._id
-    this.access_token = token
+    this.isActivate = model.isActivate
   }
 }

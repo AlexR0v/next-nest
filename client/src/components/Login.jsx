@@ -1,12 +1,14 @@
-import axios                                       from 'axios'
-import { useContext, useEffect, useRef, useState } from 'react'
-import AuthContext                                 from '../context/AuthContext.jsx'
+import { useEffect, useRef, useState }    from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { api }                            from '../api/index.js'
 
-const LOGIN_URL = 'http://localhost:5002/api/auth/login'
+const LOGIN_URL = '/auth/login'
 
 const Login = () => {
 
-  const { setAuth } = useContext(AuthContext)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from?.pathname || '/'
 
   const userRef = useRef()
   const errRef = useRef()
@@ -15,6 +17,8 @@ const Login = () => {
   const [pwd, setPwd] = useState('')
   const [errMsg, setErrMsg] = useState('')
   const [success, setSuccess] = useState(false)
+  const [typePass, setTypePass] = useState('password')
+  const [check, setCheck] = useState(false)
 
   useEffect(() => {
     userRef.current.focus()
@@ -28,7 +32,7 @@ const Login = () => {
     e.preventDefault()
 
     try {
-      const response = await axios.post(LOGIN_URL,
+      const response = await api.post(LOGIN_URL,
         JSON.stringify({ username: user, password: pwd }),
         {
           headers: { 'Content-Type': 'application/json' },
@@ -37,10 +41,11 @@ const Login = () => {
       )
       const accessToken = response?.data?.access_token
       localStorage.setItem('token', accessToken)
-      setAuth({ user: response?.data?.username, id: response?.data?.id })
+      localStorage.setItem('username', response?.data?.username)
       setUser('')
       setPwd('')
       setSuccess(true)
+      navigate(from, { replace: true })
     } catch (err) {
       if (!err?.response) {
         setErrMsg('No Server Response')
@@ -62,7 +67,7 @@ const Login = () => {
           <h1>You are logged in!</h1>
           <br />
           <p>
-            <a href='#'>Go to Home</a>
+            <Link to='/'>Go to Home</Link>
           </p>
         </section>
       ) : (
@@ -87,19 +92,31 @@ const Login = () => {
 
             <label htmlFor='password'>Password:</label>
             <input
-              type='password'
+              type={typePass}
               id='password'
               onChange={(e) => setPwd(e.target.value)}
               value={pwd}
               required
+            />
+            <label htmlFor='checkbox'>Show password:</label>
+            <input
+              type='checkbox'
+              id='checkbox'
+              onChange={(e) => {
+                setCheck(e.target.checked)
+                if (e.target.checked) {
+                  setTypePass('text')
+                } else setTypePass('password')
+              }}
+              checked={check}
             />
             <button>Sign In</button>
           </form>
           <p>
             Need an Account?<br />
             <span className='line'>
-              <a href='#'>Sign Up</a>
-                        </span>
+              <Link to='/register'>Sign Up</Link>
+            </span>
           </p>
         </section>
       )}

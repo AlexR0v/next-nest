@@ -1,13 +1,14 @@
-import { Module }          from '@nestjs/common'
-import { JwtModule }       from '@nestjs/jwt'
-import { MongooseModule }  from '@nestjs/mongoose'
-import { PassportModule }  from '@nestjs/passport'
-import { AuthController }  from './auth.controller'
-import { AuthService }     from './auth.service'
-import { jwtConstants }    from './jwt.constants'
-import { User, UserModel } from './models/user.model'
-import { JwtStrategy }     from './strateges/jwt.strategy'
-import { LocalStrategy }   from './strateges/local.strategy'
+import { Module }             from '@nestjs/common'
+import { JwtModule }          from '@nestjs/jwt'
+import { MongooseModule }     from '@nestjs/mongoose'
+import { PassportModule }     from '@nestjs/passport'
+import { AuthController }     from './auth.controller'
+import { AuthService }        from './auth.service'
+import { jwtConstants }       from './jwt.constants'
+import { User, UserModel }    from './models/user.model'
+import { JwtCookiesStrategy } from './strateges/jwt-cookie.strategy'
+import { JwtStrategy }        from './strateges/jwt.strategy'
+import { LocalStrategy }      from './strateges/local.strategy'
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { LocalStrategy }   from './strateges/local.strategy'
       signOptions: { expiresIn: '60s' }
     })
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtCookiesStrategy],
   controllers: [AuthController]
 })
 export class AuthModule {}

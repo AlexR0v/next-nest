@@ -7,7 +7,9 @@ const Home = () => {
   const logout = async () => {
     localStorage.removeItem('token')
     localStorage.removeItem('username')
-    await axios.get('http://localhost:5002/api/auth/logout')
+    await axios.get('http://localhost:5002/api/auth/logout', {
+      withCredentials: true
+    })
     navigate('/login')
   }
 

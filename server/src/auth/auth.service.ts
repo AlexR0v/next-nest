@@ -71,6 +71,7 @@ export class AuthService {
     }
     user.refresh_token = null
     user.save()
+    return user
   }
 
   async getAllUsers(){

@@ -1,3 +1,4 @@
+import axios                 from 'axios'
 import { Link, useNavigate } from 'react-router-dom'
 
 const Home = () => {
@@ -6,6 +7,7 @@ const Home = () => {
   const logout = async () => {
     localStorage.removeItem('token')
     localStorage.removeItem('username')
+    await axios.get('http://localhost:5002/api/auth/logout')
     navigate('/login')
   }
 

@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common'
-import { AuthGuard }                                        from '@nestjs/passport'
-import { Request, Response }                                from 'express'
-import { AuthService }                                      from './auth.service'
-import { CreateUserDto }                                    from './dto/createUser.dto'
-import { JwtAuthGuard }                                     from './guards/jwt.guard'
+import { Body, Controller, Get, HttpException, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common'
+import { AuthGuard }                                                                   from '@nestjs/passport'
+import { Request, Response }                                                           from 'express'
+import { AuthService }                                                                 from './auth.service'
+import { CreateUserDto }                                                               from './dto/createUser.dto'
+import { JwtAuthGuard }                                                                from './guards/jwt.guard'
 
 @Controller('auth')
 export class AuthController {
@@ -21,7 +21,7 @@ export class AuthController {
     const { username } = body
     const { newUser, access_token, refresh_token } = await this.authService.login(username)
     response.cookie('jwt', refresh_token,
-      { httpOnly: true, sameSite: 'none', secure: true, maxAge: 24 * 60 * 60 * 1000 })
+      { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
     return { ...newUser, access_token }
   }
 
@@ -34,9 +34,12 @@ export class AuthController {
 
   @Get('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response){
+    if (!req.cookies['jwt']) {
+      throw new HttpException('User not found', HttpStatus.NO_CONTENT)
+    }
     await this.authService.logout(req.cookies['jwt'])
-    res.clearCookie('jwt', { httpOnly: true, sameSite: 'none', secure: true })
-    return res.sendStatus(200)
+    res.clearCookie('jwt', { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
+    return { success: true }
   }
 
   @UseGuards(JwtAuthGuard)

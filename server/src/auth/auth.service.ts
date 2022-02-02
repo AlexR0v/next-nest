@@ -3,6 +3,8 @@ import { JwtService }                                                           
 import { InjectModel }                                                                     from '@nestjs/mongoose'
 import * as bcrypt                                                                         from 'bcrypt'
 import { Model }                                                                           from 'mongoose'
+import { v4 as uuidv4 }                                                                    from 'uuid'
+import { MailService }                                                                     from '../mail/mail.service'
 import { CreateUserDto }                                                                   from './dto/createUser.dto'
 import { UserDto }                                                                         from './dto/newUser.dto'
 import { User, UserDocument }                                                              from './models/user.model'
@@ -12,43 +14,58 @@ export class AuthService {
 
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private mailService: MailService
   ){}
 
   async register(createUser: CreateUserDto): Promise<{ success: boolean }>{
-    const { username, password } = createUser
-    const user: User = await this.userModel.findOne({ username })
+    const { email, password } = createUser
+    const user: User = await this.userModel.findOne({ email })
     if (user) {
-      throw new ConflictException(HttpStatus.CONFLICT, `User with this username already exist`)
+      throw new ConflictException(HttpStatus.CONFLICT, `User with this email already exist`)
     }
     const hashPassword = await bcrypt.hash(password, 5)
-    const newUser = new this.userModel({ username, password: hashPassword })
+    const activationLink = uuidv4()
+    const newUser = new this.userModel({ email, password: hashPassword, link: activationLink })
     newUser.isActivate = false
+    await this.mailService.sendUserConfirmation(newUser)
     await newUser.save()
     return { success: true }
   }
 
-  async login(username: string){
-    const user = await this.userModel.findOne({ username })
-    const payload = { username: user.username }
+  async activate(link: string){
+    const user = await this.userModel.findOne({ link })
+    if (!user) {
+      throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, `User not found`)
+    }
+    user.isActivate = true
+    await user.save()
+  }
+
+  async login(email: string): Promise<{ newUser: UserDto, access_token: string, refresh_token: string }>{
+    const user = await this.userModel.findOne({ email })
+    const payload = { email: user.email }
     const access_token = this.jwtService.sign(payload)
-    const refresh_token = this.jwtService.sign(payload, { expiresIn: '86400s' })
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: process.env.EXPIRES_REFRESH_TOKEN })
     user.refresh_token = refresh_token
     user.save()
     const newUser = new UserDto(user)
     return { newUser, access_token, refresh_token }
   }
 
-  async refreshToken(username: string){
-    const user = await this.userModel.findOne({ username })
-    const payload = { username: user.username }
+  async refreshToken(email: string): Promise<string>{
+    const user: User = await this.userModel.findOne({ email })
+    const payload = { email: user.email }
     return this.jwtService.sign(payload)
   }
 
-  async validateUser(username: string, password: string): Promise<any>{
-    const user = await this.userModel.findOne({ username })
+  async validateUser(email: string, password: string): Promise<any>{
+    const user: User = await this.userModel.findOne({ email })
     if (!user) {
       throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, `User with this username not found`)
+    }
+    if (!user.isActivate) {
+      throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, `Account not activated`)
     }
     const matchPass = await bcrypt.compare(password, user.password)
     if (!matchPass) {
@@ -64,7 +81,7 @@ export class AuthService {
     return this.userModel.findOne({ refresh_token })
   }
 
-  async logout(refresh_token: string){
+  async logout(refresh_token: string): Promise<User>{
     const user = await this.userModel.findOne({ refresh_token })
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NO_CONTENT)
@@ -74,8 +91,37 @@ export class AuthService {
     return user
   }
 
-  async getAllUsers(){
-    const users = await this.userModel.find()
+  async resetPasswordMail(email: string){
+    const user = await this.userModel.findOne({ email })
+    if (!user) {
+      throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, `User not found`)
+    }
+    await this.mailService.sendUserResetPassword(user)
+  }
+
+  async resetPassword(link: string): Promise<{ success: boolean }>{
+    const user = await this.userModel.findOne({ link })
+    if (!user) {
+      throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, `User not found`)
+    }
+    user.password = null
+    await user.save()
+    return { success: true }
+  }
+
+  async newPassword(userReq: CreateUserDto){
+    const { email, password } = userReq
+    const user = await this.userModel.findOne({ email })
+    if (!user) {
+      throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, `User with this username not found`)
+    }
+    user.password = await bcrypt.hash(password, 5)
+    user.save()
+    return { success: true }
+  }
+
+  async getAllUsers(): Promise<UserDto[]>{
+    const users: User[] = await this.userModel.find()
     return users.map(item => new UserDto(item))
   }
 }

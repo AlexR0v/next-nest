@@ -3,7 +3,6 @@ import { PassportStrategy }                  from '@nestjs/passport'
 import { Request }                           from 'express'
 import { Strategy }                          from 'passport-jwt'
 import { AuthService }                       from '../auth.service'
-import { jwtConstants }                      from '../jwt.constants'
 
 @Injectable()
 export class JwtCookiesStrategy extends PassportStrategy(Strategy, 'jwt-cookie') {
@@ -16,7 +15,7 @@ export class JwtCookiesStrategy extends PassportStrategy(Strategy, 'jwt-cookie')
         return req.cookies['jwt']
       },
       ignoreExpiration: false,
-      secretOrKey: jwtConstants.ACCESS_TOKEN_SECRET,
+      secretOrKey: process.env.ACCESS_JWT_SECRET,
       passReqToCallback: true
     })
   }

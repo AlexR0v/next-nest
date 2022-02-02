@@ -1,6 +1,6 @@
 **/**/node_modules
 **/**/.env*
-**/**/jwt.constants.ts
+server/src/config/jwt.constants.ts
 .DS_Store
 dist
 dist-ssr

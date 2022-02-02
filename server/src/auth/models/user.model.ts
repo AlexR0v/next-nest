@@ -6,7 +6,7 @@ export type UserDocument = User & Document;
 @Schema()
 export class User {
   @Prop({ unique: true })
-  username: string
+  email: string
 
   @Prop()
   password: string
@@ -16,6 +16,9 @@ export class User {
 
   @Prop()
   isActivate: boolean
+
+  @Prop()
+  link: string
 }
 
 export const UserModel = SchemaFactory.createForClass(User)

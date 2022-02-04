@@ -15,6 +15,7 @@ import { AuthGuard }         from '@nestjs/passport'
 import { Request, Response } from 'express'
 import { AuthService }       from './auth.service'
 import { CreateUserDto }     from './dto/createUser.dto'
+import { LoginUserDto }      from './dto/loginUser.dto'
 import { JwtAuthGuard }      from './guards/jwt.guard'
 
 @Controller('auth')
@@ -34,7 +35,7 @@ export class AuthController {
       throw new BadRequestException('Link is undefined')
     }
     await this.authService.activate(link)
-    res.status(302).redirect(process.env.CLIENT_URL)
+    res.status(302).redirect(process.env.CLIENT_URL + '/login')
   }
 
   @Get('/reset-password/:link')
@@ -59,7 +60,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('/login')
-  async login(@Body() body: CreateUserDto, @Res({ passthrough: true }) response: Response){
+  async login(@Body() body: LoginUserDto, @Res({ passthrough: true }) response: Response){
     const { email } = body
     const { newUser, access_token, refresh_token } = await this.authService.login(email)
     response.cookie('jwt', refresh_token,
@@ -68,7 +69,7 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('jwt-cookie'))
-  @Post('/refresh-token')
+  @Get('/refresh-token')
   async refreshToken(@Req() req){
     const access_token = await this.authService.refreshToken(req.user.email)
     return { access_token }

@@ -19,14 +19,18 @@ export class AuthService {
   ){}
 
   async register(createUser: CreateUserDto): Promise<{ success: boolean }>{
-    const { email, password } = createUser
+    const { email, password, username } = createUser
     const user: User = await this.userModel.findOne({ email })
+    const userName: User = await this.userModel.findOne({ username })
     if (user) {
       throw new ConflictException(HttpStatus.CONFLICT, `User with this email already exist`)
     }
+    if (userName) {
+      throw new ConflictException(HttpStatus.CONFLICT, `User with this username already exist`)
+    }
     const hashPassword = await bcrypt.hash(password, 5)
     const activationLink = uuidv4()
-    const newUser = new this.userModel({ email, password: hashPassword, link: activationLink })
+    const newUser = new this.userModel({ username, email, password: hashPassword, link: activationLink })
     newUser.isActivate = false
     await this.mailService.sendUserConfirmation(newUser)
     await newUser.save()

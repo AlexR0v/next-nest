@@ -59,6 +59,7 @@ export class TrackService {
     track.comments.push(comment._id)
     await comment.save()
     await track.save()
+    await user.save()
     return comment
   }
 

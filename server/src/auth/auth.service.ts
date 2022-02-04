@@ -125,7 +125,7 @@ export class AuthService {
   }
 
   async getAllUsers(): Promise<UserDto[]>{
-    const users: User[] = await this.userModel.find()
+    const users: User[] = await this.userModel.find().populate('comments').populate('tracks')
     return users.map(item => new UserDto(item))
   }
 }

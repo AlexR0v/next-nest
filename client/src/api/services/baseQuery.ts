@@ -1,12 +1,13 @@
 import { BaseQueryFn, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query/react'
+import { RootState }                                                   from '../../store/index'
 
 export const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:5002/api',
+  baseUrl: process.env.NEXT_PUBLIC_ENV_API_URL + '/api',
   credentials: 'include',
-  prepareHeaders: (headers) => {
-    const accessToken = localStorage.getItem('access_token')
-    if (accessToken) {
-      headers.set('authorization', `Bearer ${accessToken}`)
+  prepareHeaders: (headers, { getState }) => {
+    const { user: { access_token } } = getState() as RootState
+    if (access_token) {
+      headers.set('authorization', `Bearer ${access_token}`)
     }
     return headers
   }

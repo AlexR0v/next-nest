@@ -34,7 +34,12 @@ export class TrackService {
   }
 
   async getOne(id: ObjectId): Promise<Track>{
-    return this.trackModel.findById(id).populate('comments')
+    return this.trackModel.findById(id).populate({
+      path: 'comments',
+      populate: {
+        path: 'userId'
+      }
+    })
   }
 
   async delete(id: ObjectId){

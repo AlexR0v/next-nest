@@ -13,6 +13,7 @@
     "useUnknownInCatchVariables": false,
     "noEmit": true,
     "esModuleInterop": true,
+    "strictNullChecks": false,
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,

@@ -23,11 +23,14 @@ export const userSlice = createSlice({
   reducers: {
     authUser: (state, action: PayloadAction<InitialStateInterface>) => {
       return action.payload
+    },
+    accessTokenUser: (state, action: PayloadAction<string>) => {
+      state.access_token = action.payload
     }
   }
 })
 
-export const { authUser } = userSlice.actions
+export const { authUser, accessTokenUser } = userSlice.actions
 export const userSelector = (state: RootState) => state.user
 
 export default userSlice.reducer

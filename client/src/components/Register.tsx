@@ -115,6 +115,7 @@ const Register = () => {
           />
         </label>
         <input
+          className='input'
           type='text'
           id='email'
           ref={emailRef}
@@ -147,6 +148,7 @@ const Register = () => {
           />
         </label>
         <input
+          className='input'
           type='text'
           id='username'
           ref={usernameRef}
@@ -180,6 +182,7 @@ const Register = () => {
           />
         </label>
         <input
+          className='input'
           type={type}
           id='password'
           onChange={(e) => setPwd(e.target.value)}
@@ -215,6 +218,7 @@ const Register = () => {
           />
         </label>
         <input
+          className='input'
           type={type}
           id='confirm_pwd'
           onChange={(e) => setMatchPwd(e.target.value)}
@@ -234,6 +238,7 @@ const Register = () => {
         </p>
         <label htmlFor='typePass'>Показать пароль</label>
         <input
+          className='checkbox'
           type='checkbox'
           checked={checkType}
           onChange={e => {

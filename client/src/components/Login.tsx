@@ -14,6 +14,8 @@ const Login = () => {
   const emailRef = useRef<HTMLInputElement>(null)
   const errRef = useRef<HTMLInputElement>(null)
 
+  const [persist, setPersist] = useState(false)
+
   const [email, setEmail] = useState('')
   const [pwd, setPwd] = useState('')
   const [errMsg, setErrMsg] = useState('')
@@ -36,7 +38,6 @@ const Login = () => {
     try {
       const user = await login({ email, password: pwd }).unwrap()
       if (user) {
-        localStorage.setItem('access_token', user.access_token)
         dispatch(authUser(user))
         setEmail('')
         setPwd('')
@@ -56,6 +57,14 @@ const Login = () => {
     }
   }
 
+  useEffect(() => {
+    localStorage.setItem('persist', String(persist))
+  }, [persist])
+
+  useEffect(() => {
+    localStorage.setItem('persist', String(false))
+  }, [])
+
   return (
 
     <section>
@@ -68,6 +77,7 @@ const Login = () => {
       <form onSubmit={handleSubmit}>
         <label htmlFor='username'>Email:</label>
         <input
+          className='input'
           type='text'
           id='username'
           ref={emailRef}
@@ -79,25 +89,40 @@ const Login = () => {
 
         <label htmlFor='password'>Пароль:</label>
         <input
+          className='input'
           type={type}
           id='password'
           onChange={(e) => setPwd(e.target.value)}
           value={pwd}
           required
         />
-        <label htmlFor='typePass'>Показать пароль</label>
-        <input
-          type='checkbox'
-          checked={checkType}
-          onChange={e => {
-            setCheckType(e.target.checked)
-            if (e.target.checked) {
-              setType('text')
-            } else {
-              setType('password')
-            }
-          }}
-        />
+        <div className='persistCheck'>
+          <input
+            id='typePass'
+            className='checkbox'
+            type='checkbox'
+            checked={checkType}
+            onChange={e => {
+              setCheckType(e.target.checked)
+              if (e.target.checked) {
+                setType('text')
+              } else {
+                setType('password')
+              }
+            }}
+          />
+          <label htmlFor='typePass'>Показать пароль</label>
+        </div>
+        <div className='persistCheck'>
+          <input
+            className='checkbox'
+            type='checkbox'
+            id='persist'
+            onChange={e => setPersist(e.target.checked)}
+            checked={persist}
+          />
+          <label htmlFor='persist'>Запомнить меня</label>
+        </div>
         <button disabled={isLoading}>Войти</button>
       </form>
       <p>
